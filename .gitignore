@@ -1,0 +1,8 @@
+# composer
+/vendor/
+
+# phpStorm
+.idea
+
+# macOS Finder
+.DS_Store

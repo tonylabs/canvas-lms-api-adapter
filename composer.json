@@ -1,0 +1,27 @@
+{
+    "name": "tonylabs/ccanvas-lms-api-adapter",
+    "description": "Canvas API Adapter",
+    "keywords": ["Canvas LMS"],
+    "version": "1.0.0",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "TONYLABS\\Canvas\\Api\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "TONYLABS",
+            "email": "support@tonylabs.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^8.0",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^7.0.1",
+        "illuminate/console": "^8.0",
+        "illuminate/support": "^8.0"
+    }
+}
