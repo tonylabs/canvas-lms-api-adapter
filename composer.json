@@ -7,7 +7,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "TONYLABS\\Canvas\\Api\\": "src"
+            "TONYLABS\\Canvas\\": "src"
         }
     },
     "authors": [
