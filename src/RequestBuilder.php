@@ -18,6 +18,7 @@ class RequestBuilder {
     protected ?string $method;
     protected array $options = [];
     protected ?array $data = null;
+    protected array $queryString = [];
     protected bool $asJsonResponse = false;
     protected string $pageKey = 'per_page';
     protected Paginator $paginator;
@@ -105,6 +106,20 @@ class RequestBuilder {
     public function with(array $data): static
     {
         return $this->setData($data);
+    }
+
+    /**
+     * Sets the endpoint to the named query
+     *
+     * @param string $query The named query name (com.organization.product.area.name)
+     * @param array $data
+     * @return RequestBuilder|mixed
+     */
+    public function getCourses()
+    {
+        $this->endpoint = '/api/v1/courses';
+        $this->pageKey = 'per_page';
+        return $this->setMethod(static::GET);
     }
 
     /**
