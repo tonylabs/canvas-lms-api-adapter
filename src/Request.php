@@ -50,7 +50,7 @@ class Request
         } catch (ClientException $exception) {
             $response = $exception->getResponse();
             if ($response->getStatusCode() === 401 && $this->attempts < 3) {
-                return $this->authenticate(true)->makeRequest($method, $endpoint, $options);
+                
             }
             Debug::log(fn () => ray()->json($response->getBody()->getContents())->red()->label($response->getStatusCode()));
             throw $exception;
