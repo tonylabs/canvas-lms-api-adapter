@@ -7,23 +7,19 @@ use stdClass;
 
 class RequestBuilder {
 
-    const GET = 'get';
-    const POST = 'post';
-    const PUT = 'put';
-    const PATCH = 'patch';
-    const DELETE = 'delete';
+    const GET = 'GET';
+    const POST = 'POST';
+    const PUT = 'PUT';
+    const PATCH = 'PATCH';
+    const DELETE = 'DELETE';
 
     protected Request $request;
     protected ?string $endpoint;
     protected ?string $method;
     protected array $options = [];
     protected ?array $data = null;
-    protected ?string $table = null;
-    protected array $queryString = [];
-    protected string|int|null $id = null;
-    protected bool $includeProjection = false;
     protected bool $asJsonResponse = false;
-    protected string $pageKey = 'record';
+    protected string $pageKey = 'per_page';
     protected Paginator $paginator;
 
     public function __construct(string $domain, string $token)
@@ -37,21 +33,16 @@ class RequestBuilder {
     }
 
     /**
-     * Cleans all the variables for the next request
+     * Reset all the variables for the next request
      */
-    public function freshen(): static
+    public function reset(): static
     {
         $this->endpoint = null;
         $this->method = null;
         $this->options = [];
         $this->data = null;
-        $this->table = null;
-        $this->queryString = [];
-        $this->id = null;
-        $this->includeProjection = false;
-        $this->asJsonResponse = false;
+        $this->pageKey = 'per_page';
         unset($this->paginator);
-        $this->pageKey = 'record';
         return $this;
     }
 
@@ -62,7 +53,7 @@ class RequestBuilder {
     {
         $this->endpoint = $endpoint;
         $this->pageKey = Str::afterLast($endpoint, '/');
-        return $this->excludeProjection();
+        return $this;
     }
 
     /**
@@ -331,7 +322,7 @@ class RequestBuilder {
         $this->buildRequestJson()->buildRequestQuery();
         $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options, $this->asJsonResponse);
         $response = new Response($responseData, $this->pageKey);
-        if ($reset) $this->freshen();
+        if ($reset) $this->reset();
         return $response;
     }
 }

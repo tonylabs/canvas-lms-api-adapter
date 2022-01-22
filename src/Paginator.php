@@ -8,7 +8,7 @@ class Paginator
 
     protected RequestBuilder $objRequestBuilder;
 
-    public function __construct(RequestBuilder $builder, int $pageSize = 100)
+    public function __construct(RequestBuilder $builder, int $pageSize = 10)
     {
         $this->objRequestBuilder = $builder->pageSize($pageSize);
     }
