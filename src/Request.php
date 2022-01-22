@@ -7,7 +7,6 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Response as LaravelResponse;
 use TONYLABS\Canvas\Exception\MissingTokenException;
-use TONYLABS\PowerSchool\Api\Exception\MissingClientCredentialsException;
 
 class Request
 {
@@ -67,7 +66,7 @@ class Request
         }
         return $objBody ?? [];
     }
-    
+
     public function getClient(): Client
     {
         return $this->client;
