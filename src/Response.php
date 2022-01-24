@@ -8,45 +8,26 @@ use Illuminate\Support\Collection;
 class Response implements \Iterator, \ArrayAccess
 {
     public ?array $data;
-    public array $expansions = [];
-    public array $extensions = [];
-    protected int $index = 0;
-    protected ?string $tableName;
 
     public function __construct(array $data, string $key)
     {
-        $this->tableName = strtolower($data['name'] ?? null);
         $this->data = $this->inferData($data, strtolower($key));
     }
 
     protected function inferData(array $data, string $key): array
     {
-        if (isset($data['@expansions'])) {
-            $this->setExt($data, 'expansions');
-            unset($data['@expansions']);
-        }
-
-        if (isset($data['@extensions'])) {
-            $this->setExt($data, 'extensions');
-            unset($data['@extensions']);
-        }
-
         if (empty($data)) {
             return [];
         }
-
         if (isset($data[$key])) {
             return $data[$key];
         }
-
         if ($nested = Arr::get($data, $key . 's')) {
             return $this->inferData($nested, $key);
         }
-
         if (count(array_keys($data)) === 1) {
             return $this->inferData(Arr::first($data), '');
         }
-
         return $data;
     }
 
@@ -54,42 +35,6 @@ class Response implements \Iterator, \ArrayAccess
     {
         $this->data = $data;
         return $this;
-    }
-
-    public function squashTableResponse(): static
-    {
-        if (!$this->tableName) {
-            return $this;
-        }
-
-        $isAssoc = Arr::isAssoc($this->data);
-
-        if ($isAssoc) {
-            $this->data = [$this->data];
-        }
-
-        $this->data = array_map(
-            fn (array $datum) => $datum['tables'][$this->tableName],
-            $this->data
-        );
-
-        if ($isAssoc) {
-            $this->data = Arr::first($this->data);
-        }
-
-        return $this;
-    }
-
-    protected function setExt(array $data, string $property)
-    {
-        $this->$property = $this->splitCommaString(Arr::get($data, "@$property"));
-    }
-
-    protected function splitCommaString(?string $string): array
-    {
-        if (!$string) return [];
-        $parts = explode(',', $string);
-        return array_map(fn ($s) => trim($s), $parts);
     }
 
     public function isEmpty(): bool

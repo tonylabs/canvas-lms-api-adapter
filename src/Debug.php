@@ -11,7 +11,7 @@ class Debug
                 $data();
                 return;
             }
-            ray($data)->blue();
+            ray($data)->blue()->label('CANVAS API ADAPTER');
         }
     }
 }

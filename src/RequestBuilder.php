@@ -118,7 +118,6 @@ class RequestBuilder {
     public function getCourses()
     {
         $this->endpoint = '/api/v1/courses';
-        $this->pageKey = 'per_page';
         return $this->setMethod(static::GET);
     }
 
@@ -251,23 +250,18 @@ class RequestBuilder {
      */
     public function buildRequestQuery(): static
     {
-        // Build the query by hand
         if ($this->method !== static::GET && $this->method !== static::POST) {
             return $this;
         }
-
         $this->options['query'] = '';$this->options['query'] = '';
-        $qs = [];
 
-        // Build the query string
+        $qs = [];
         foreach ($this->queryString as $var => $val) {
             $qs[] = $var . '=' . $val;
         }
-
         if (!empty($qs)) {
             $this->options['query'] = implode('&', $qs);
         }
-
         return $this;
     }
 

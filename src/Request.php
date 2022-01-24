@@ -33,8 +33,6 @@ class Request
      */
     public function makeRequest(string $method, string $endpoint, array $options, bool $returnResponse = false): JsonResponse|array
     {
-        $this->attempts++;
-
         if (!$this->token) {
             throw new MissingTokenException('Canvas token is missing.');
         }
@@ -49,14 +47,9 @@ class Request
             $response = $this->getClient()->request($method, $endpoint, $options);
         } catch (ClientException $exception) {
             $response = $exception->getResponse();
-            if ($response->getStatusCode() === 401 && $this->attempts < 3) {
-
-            }
             Debug::log(fn () => ray()->json($response->getBody()->getContents())->red()->label($response->getStatusCode()));
             throw $exception;
         }
-        $this->attempts = 0;
-
         $jsonContent = $response->getBody()->getContents();
         Debug::log($jsonContent);
         $objBody = json_decode($jsonContent, true);
