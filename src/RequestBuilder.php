@@ -340,4 +340,19 @@ class RequestBuilder {
         if ($reset) $this->reset();
         return $response;
     }
+
+    /**
+     * This will return a chunk of data from PowerSchool
+     */
+    public function paginate(int $pageSize = 100): ?Response
+    {
+        if (!isset($this->paginator)) {
+            $this->paginator = new Paginator($this, $pageSize);
+        }
+        $results = $this->paginator->page();
+        if ($results === null) {
+            $this->reset();
+        }
+        return $results;
+    }
 }
