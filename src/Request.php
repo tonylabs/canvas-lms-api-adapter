@@ -24,7 +24,7 @@ class Request
      */
     public function __construct(string $domain, string $token)
     {
-        $this->client = new Client(['verify' => false, 'base_uri' => $domain]);
+        $this->client = new Client(['base_uri' => $domain]);
         $this->token = $token;
     }
 
