@@ -19,7 +19,6 @@ class RequestBuilder {
     protected array $options = [];
     protected ?array $data = null;
     protected array $queryString = [];
-    protected bool $asJsonResponse = false;
     protected string $pageKey = 'per_page';
     protected Paginator $paginator;
 
@@ -109,19 +108,6 @@ class RequestBuilder {
     }
 
     /**
-     * Sets the endpoint to the named query
-     *
-     * @param string $query The named query name (com.organization.product.area.name)
-     * @param array $data
-     * @return RequestBuilder|mixed
-     */
-    public function getCourses()
-    {
-        $this->endpoint = '/api/v1/courses';
-        return $this->setMethod(static::GET);
-    }
-
-    /**
      * Sets an item to be included in the post request
      */
     public function setDataItem(string $key, $value): static
@@ -140,7 +126,6 @@ class RequestBuilder {
         } else {
             parse_str($queryString, $this->queryString);
         }
-
         $this->queryString = $queryString;
         return $this;
     }
@@ -192,24 +177,6 @@ class RequestBuilder {
     public function page(int $page): static
     {
         return $this->addQueryVar('page', $page);
-    }
-
-    /**
-     * Sets a flag to return as a decoded json rather than an Illuminate\Response
-     */
-    public function raw(): static
-    {
-        $this->asJsonResponse = false;
-        return $this;
-    }
-
-    /**
-     * Sets the flag to return a response
-     */
-    public function asJsonResponse(): static
-    {
-        $this->asJsonResponse = true;
-        return $this;
     }
 
     /**
@@ -329,7 +296,7 @@ class RequestBuilder {
     public function send(bool $reset = true): Response
     {
         $this->buildRequestJson()->buildRequestQuery();
-        $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options, $this->asJsonResponse);
+        $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options);
         $response = new Response($responseData, $this->pageKey);
         if ($reset) $this->reset();
         return $response;

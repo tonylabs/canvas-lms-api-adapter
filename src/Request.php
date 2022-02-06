@@ -31,7 +31,7 @@ class Request
     /**
      * Makes an api call to Canvas API
      */
-    public function makeRequest(string $method, string $endpoint, array $options, bool $returnResponse = false): JsonResponse|array
+    public function makeRequest(string $method, string $endpoint, array $options): JsonResponse|array
     {
         if (!$this->token) {
             throw new MissingTokenException('Canvas token is missing.');
@@ -51,12 +51,7 @@ class Request
             throw $exception;
         }
         $jsonContent = $response->getBody()->getContents();
-        Debug::log($jsonContent);
         $objBody = json_decode($jsonContent, true);
-
-        if ($returnResponse) {
-            return LaravelResponse::json($objBody, $response->getStatusCode());
-        }
         return $objBody ?? [];
     }
 
