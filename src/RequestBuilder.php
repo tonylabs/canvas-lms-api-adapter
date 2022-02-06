@@ -87,7 +87,7 @@ class RequestBuilder {
      */
     public function setData(array $data): static
     {
-        $this->data = $this->castToValuesString($data);
+        $this->data = $this->flatDataToString($data);
         return $this;
     }
 
@@ -112,7 +112,7 @@ class RequestBuilder {
      */
     public function setDataItem(string $key, $value): static
     {
-        $this->data[$key] = $this->castToValuesString($value);
+        $this->data[$key] = $this->flatDataToString($value);
         return $this;
     }
 
@@ -177,6 +177,29 @@ class RequestBuilder {
     public function page(int $page): static
     {
         return $this->addQueryVar('page', $page);
+    }
+
+    /**
+     * Flat all the data in an array recursively as a string
+     */
+    protected function flatDataToString(array $data): array
+    {
+        foreach ($data as $key => $value)
+        {
+            if (is_array($value)) {
+                $data[$key] = $this->flatDataToString($value);
+                continue;
+            }
+            // If it's null set the value to an empty string
+            if (is_null($value)) $value = '';
+
+            // If the type is a bool, set it to the
+            // integer type that Canvas uses, 1 or 0
+            if (is_bool($value)) $value = $value ? '1' : '0';
+
+            $data[$key] = (string) $value;
+        }
+        return $data;
     }
 
     /**
