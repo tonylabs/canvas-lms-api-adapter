@@ -203,39 +203,6 @@ class RequestBuilder {
     }
 
     /**
-     * Builds the dumb request structure for PowerSchool
-     */
-    public function buildRequestJson(): static
-    {
-        if ($this->method === static::GET || $this->method === 'delete') {
-            return $this;
-        }
-
-        // Reset the json object from previous requests
-        $this->options['json'] = [];
-
-        if ($this->table) {
-            $this->options['json']['tables'] = [$this->table => $this->data];
-        }
-
-        if ($this->id) {
-            $this->options['json']['id'] = $this->id;
-            $this->options['json']['name'] = $this->table;
-        }
-
-        if ($this->data && !$this->table) {
-            $this->options['json'] = $this->data;
-        }
-
-        // Remove the json option if there is nothing there
-        if (empty($this->options['json'])) {
-            unset($this->options['json']);
-        }
-
-        return $this;
-    }
-
-    /**
      * Builds the query string for the request
      */
     public function buildRequestQuery(): static
