@@ -168,7 +168,7 @@ class RequestBuilder {
      */
     public function pageSize(int $pageSize): static
     {
-        return $this->addQueryVar('pagesize', $pageSize);
+        return $this->addQueryVar('per_page', $pageSize);
     }
 
     /**
