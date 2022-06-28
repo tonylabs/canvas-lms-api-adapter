@@ -203,7 +203,7 @@ class RequestBuilder {
     }
 
     /**
-     * Builds the dumb request structure for PowerSchool
+     * Builds the dumb request structure for Canvas
      */
     public function buildRequestJson(): static
     {
@@ -301,7 +301,7 @@ class RequestBuilder {
     }
 
     /**
-     * Sends the request to PowerSchool
+     * Sends the request to Canvas
      */
     public function send(bool $reset = true): Response
     {
@@ -313,9 +313,9 @@ class RequestBuilder {
     }
 
     /**
-     * This will return a chunk of data from PowerSchool
+     * This will return a chunk of data from Canvas
      */
-    public function paginate(int $pageSize = 100): ?Response
+    public function paginate(int $pageSize = 50): ?Response
     {
         if (!isset($this->paginator)) {
             $this->paginator = new Paginator($this, $pageSize);
