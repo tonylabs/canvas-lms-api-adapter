@@ -126,10 +126,8 @@ class RequestBuilder {
         } else {
             parse_str($queryString, $this->queryString);
         }
-        $this->queryString = $queryString;
         return $this;
     }
-
     /**
      * Alias of withQueryString()
      */
@@ -230,6 +228,7 @@ class RequestBuilder {
         if ($this->method !== static::GET && $this->method !== static::POST) {
             return $this;
         }
+        
         $this->options['query'] = '';$this->options['query'] = '';
 
         $qs = [];

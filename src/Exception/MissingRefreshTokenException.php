@@ -1,5 +1,5 @@
 <?php
 
-namespace TONYLABS\Canvas\Api\Exception;
+namespace TONYLABS\Canvas\Exception;
 
 class MissingRefreshTokenException extends \Exception {}

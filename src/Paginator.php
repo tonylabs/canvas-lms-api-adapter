@@ -4,28 +4,41 @@ namespace TONYLABS\Canvas;
 
 class Paginator
 {
-    protected int $page = 1;
+    protected RequestBuilder $builder;
+    protected int $pageSize;
+    protected int $currentPage = 1;
+    protected bool $hasMorePages = true;
 
-    protected RequestBuilder $objRequestBuilder;
-
-    public function __construct(RequestBuilder $builder, int $pageSize = 10)
+    public function __construct(RequestBuilder $builder, int $pageSize = 50)
     {
-        $this->objRequestBuilder = $builder->pageSize($pageSize);
+        $this->builder = $builder;
+        $this->pageSize = $pageSize;
     }
 
     public function page(): ?Response
     {
-        $arrayResults = $this->objRequestBuilder->page($this->page)->send(false);
-
-        //@A single record wrapped in an array
-        if (!$arrayResults->isEmpty() && !$arrayResults[0]) {
-            $arrayResults->setData([$arrayResults->data]);
-        }
-        if ($arrayResults->isEmpty()) {
-            $this->page = 1;
+        if (!$this->hasMorePages) {
             return null;
         }
-        $this->page += 1;
-        return $arrayResults;
+
+        $this->builder->pageSize($this->pageSize);
+        $this->builder->page($this->currentPage);
+        
+        $response = $this->builder->send(false);
+        
+        // If we got fewer results than the page size, we're done
+        if (count($response) < $this->pageSize) {
+            $this->hasMorePages = false;
+        }
+        
+        $this->currentPage++;
+        
+        return $response;
+    }
+
+    public function reset(): void
+    {
+        $this->currentPage = 1;
+        $this->hasMorePages = true;
     }
 }
