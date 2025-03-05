@@ -46,7 +46,6 @@ class Request
             $body = $response->getBody()->getContents();
             return json_decode($body, true) ?? [];
         } catch (ClientException $e) {
-            Debug::log($e->getMessage());
             return [];
         }
     }
