@@ -92,22 +92,4 @@ class Response implements \ArrayAccess, \Iterator, \Countable
     {
         return collect($this->data);
     }
-
-    public function __serialize(): array
-    {
-        return [
-            'data' => $this->data,
-            'table_name' => $this->tableName,
-            'expansions' => $this->expansions,
-            'extensions' => $this->extensions,
-        ];
-    }
-    
-    public function __unserialize(array $data): void
-    {
-        $this->data = $data['data'];
-        $this->tableName = $data['table_name'];
-        $this->expansions = $data['expansions'];
-        $this->extensions = $data['extensions'];
-    }
 }
