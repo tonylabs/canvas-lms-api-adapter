@@ -2,7 +2,7 @@
     "name": "tonylabs/canvas-lms-api-adapter",
     "description": "PHP adapter for Canvas LMS API integration",
     "keywords": ["Canvas LMS", "API", "Education", "LMS"],
-    "version": "1.0.2",
+    "version": "1.0.3",
     "type": "library",
     "license": "MIT",
     "authors": [
