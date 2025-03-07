@@ -4,51 +4,32 @@ namespace TONYLABS\Canvas;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use ArrayAccess;
+use IteratorAggregate;
+use ArrayIterator;
 
-class Response implements \ArrayAccess, \Iterator, \Countable
+class Response implements ArrayAccess, IteratorAggregate
 {
     protected array $data = [];
-    protected string $tableName;
-    protected array $expansions = [];
-    protected array $extensions = [];
-    protected int $index = 0;
 
     public function __construct(array $data, string $tableName = '')
     {
         $this->data = $data;
-        $this->tableName = $tableName;
     }
 
-    public function count(): int
+    public function __serialize(): array
     {
-        return count($this->data);
+        return [
+            'data' => $this->data
+        ];
     }
 
-    public function current(): mixed
+    public function __unserialize(array $data): void
     {
-        return $this->data[$this->index];
+        $this->data = $data['data'];
     }
 
-    public function key(): int
-    {
-        return $this->index;
-    }
-
-    public function next(): void
-    {
-        $this->index++;
-    }
-
-    public function valid(): bool
-    {
-        return isset($this->data[$this->index]);
-    }
-
-    public function rewind(): void
-    {
-        $this->index = 0;
-    }
-
+    // Implement ArrayAccess methods
     public function offsetExists($offset): bool
     {
         return isset($this->data[$offset]);
@@ -56,7 +37,7 @@ class Response implements \ArrayAccess, \Iterator, \Countable
 
     public function offsetGet($offset): mixed
     {
-        return Arr::get($this->data, $offset);
+        return $this->data[$offset] ?? null;
     }
 
     public function offsetSet($offset, $value): void
@@ -73,9 +54,15 @@ class Response implements \ArrayAccess, \Iterator, \Countable
         unset($this->data[$offset]);
     }
 
-    public function __get(string $name): mixed
+    // Implement IteratorAggregate
+    public function getIterator(): ArrayIterator
     {
-        return $this->data[$name] ?? null;
+        return new ArrayIterator($this->data);
+    }
+
+    public function count(): int
+    {
+        return count($this->data);
     }
 
     public function toArray(): array
