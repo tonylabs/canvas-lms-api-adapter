@@ -46,7 +46,13 @@ class Request
             $body = $response->getBody()->getContents();
             return json_decode($body, true) ?? [];
         } catch (ClientException $e) {
-            return [];
+            $responseBody = $e->getResponse()->getBody()->getContents();
+            $errorData = json_decode($responseBody, true) ?? ['message' => 'Unknown error'];
+            throw new \Exception(
+                'Canvas API Error: ' . ($errorData['message'] ?? $e->getMessage()),
+                $e->getCode(),
+                $e
+            );
         }
     }
 }
