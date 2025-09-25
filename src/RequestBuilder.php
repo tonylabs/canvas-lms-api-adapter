@@ -4,6 +4,7 @@ namespace TONYLABS\Canvas;
 
 use Illuminate\Support\Str;
 use stdClass;
+use TONYLABS\Canvas\Exception\TokenRefreshException;
 
 class RequestBuilder {
 
@@ -21,15 +22,68 @@ class RequestBuilder {
     protected array $queryString = [];
     protected string $pageKey = 'per_page';
     protected Paginator $paginator;
+    protected ?TokenManager $tokenManager = null;
+    protected bool $autoRefresh = false;
+    protected string $domain;
+    protected string $currentToken;
 
-    public function __construct(string $domain, string $token)
+    public function __construct(string $domain, string $token, ?TokenManager $tokenManager = null)
     {
-        $this->request = new Request($domain, $token);
+        $this->domain = $domain;
+        $this->currentToken = $token;
+        $this->tokenManager = $tokenManager;
+        $this->autoRefresh = $tokenManager !== null;
+        if ($this->tokenManager) {
+            $this->currentToken = $this->tokenManager->getValidToken();
+        }
+        $this->request = new Request($domain, $this->currentToken);
+    }
+
+    /**
+     * Create RequestBuilder instance with auto-refresh capability
+     */
+    public static function withAutoRefresh(string $domain, string $client_id, string $client_secret, string $refreshToken, ?string $initialToken = null): self {
+        $objTokenManager = new TokenManager($domain, $client_id, $client_secret, $refreshToken);
+        if ($initialToken) {
+            $objTokenManager->setAccessToken($initialToken);
+        }
+        return new self($domain, $objTokenManager->getValidToken(), $objTokenManager);
+    }
+
+    /**
+     * Create RequestBuilder from CanvasConfig
+     */
+    public static function fromConfig(CanvasConfig $config): self
+    {
+        if ($config->isAutoRefreshEnabled() && $config->getRefreshToken()) {
+            return self::withAutoRefresh(
+                $config->getDomain(),
+                $config->getClientId(),
+                $config->getClientSecret(),
+                $config->getRefreshToken(),
+                $config->getAccessToken()
+            );
+        }
+
+        return new self($config->getDomain(), $config->getAccessToken());
     }
 
     public function getRequest(): Request
     {
         return $this->request;
+    }
+
+    /**
+     * Refresh the token and recreate the Request instance
+     */
+    protected function refreshTokenAndRequest(): void
+    {
+        if (!$this->tokenManager) {
+            throw new TokenRefreshException('Token manager is not available for token refresh');
+        }
+        $this->tokenManager->refreshAccessToken();
+        $this->currentToken = $this->tokenManager->getValidToken();
+        $this->request = new Request($this->domain, $this->currentToken);
     }
 
     /**
@@ -128,6 +182,7 @@ class RequestBuilder {
         }
         return $this;
     }
+
     /**
      * Alias of withQueryString()
      */
@@ -228,7 +283,7 @@ class RequestBuilder {
         if ($this->method !== static::GET && $this->method !== static::POST) {
             return $this;
         }
-        
+
         $this->options['query'] = '';$this->options['query'] = '';
 
         $qs = [];
@@ -300,15 +355,36 @@ class RequestBuilder {
     }
 
     /**
-     * Sends the request to Canvas
+     * Sends the request to Canvas with auto-refresh capability
      */
     public function send(bool $reset = true): Response
     {
         $this->buildRequestJson()->buildRequestQuery();
-        $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options);
-        $response = new Response($responseData, $this->pageKey);
-        if ($reset) $this->reset();
-        return $response;
+        try {
+            $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options);
+            $response = new Response($responseData, '', $this);
+            if ($reset) $this->reset();
+            return $response;
+        } catch (\Exception $e) {
+            // Check if it's a 401 error and auto-refresh is enabled
+            if ($e->getCode() === 401 && $this->autoRefresh && $this->tokenManager) {
+                try {
+                    $this->refreshTokenAndRequest();
+                    $responseData = $this->getRequest()->makeRequest($this->method, $this->endpoint, $this->options);
+                    $response = new Response($responseData, '', $this);
+                    if ($reset) $this->reset();
+                    return $response;
+                } catch (TokenRefreshException $refreshException) {
+                    // If refresh fails, throw the original exception with additional context
+                    throw new \Exception(
+                        'Canvas API Error: Token expired and refresh failed - ' . $refreshException->getMessage(),
+                        $e->getCode(),
+                        $e
+                    );
+                }
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -324,5 +400,83 @@ class RequestBuilder {
             $this->reset();
         }
         return $results;
+    }
+
+    /**
+     * Get a Paginator instance for iterating through pages
+     */
+    public function getPaginator(int $pageSize = 10): Paginator
+    {
+        return new Paginator($this, $pageSize);
+    }
+
+    /**
+     * Check if auto-refresh is enabled
+     */
+    public function hasAutoRefresh(): bool
+    {
+        return $this->autoRefresh;
+    }
+
+    /**
+     * Get the current token
+     */
+    public function getCurrentToken(): string
+    {
+        return $this->currentToken;
+    }
+
+    /**
+     * Get the token manager instance
+     */
+    public function getTokenManager(): ?TokenManager
+    {
+        return $this->tokenManager;
+    }
+
+    /**
+     * Get the token expiration time in Y-m-d H:i:s format
+     */
+    public function getTokenExpirationTime(): ?string
+    {
+        if (!$this->tokenManager) {
+            return null;
+        }
+        $expiresAt = $this->tokenManager->getExpiresAt();
+
+        if (!$expiresAt) {
+            return null;
+        }
+        return date('Y-m-d H:i:s', $expiresAt);
+    }
+
+    /**
+     * Make a request to a Canvas pagination URL (from Link headers)
+     */
+    public function requestPaginationUrl(string $url): Response
+    {
+        // Parse the URL to extract the endpoint and query parameters
+        $parsedUrl = parse_url($url);
+        $endpoint = $parsedUrl['path'] ?? '';
+
+        // Store original query parameters that should be preserved
+        $originalQueryString = $this->queryString;
+        
+        // Parse new query parameters from pagination URL
+        $newQueryString = [];
+        if (isset($parsedUrl['query'])) {
+            parse_str($parsedUrl['query'], $newQueryString);
+        }
+        
+        // Merge original parameters with new ones, giving priority to new ones
+        // but preserving important original parameters like per_page if not present in new URL
+        $this->queryString = array_merge($originalQueryString, $newQueryString);
+        
+        // Ensure per_page is preserved if it was originally set but not in pagination URL
+        if (isset($originalQueryString['per_page']) && !isset($newQueryString['per_page'])) {
+            $this->queryString['per_page'] = $originalQueryString['per_page'];
+        }
+
+        return $this->setEndpoint($endpoint)->setMethod(static::GET)->send();
     }
 }
